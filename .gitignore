@@ -9,3 +9,7 @@ staticfiles/
 # React
 frontend/node_modules/
 frontend/dist/
+
+# add these lines to .gitignore
+media/
+*.sqlite3-journal

@@ -23,7 +23,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'apple_app'
+    'django_filters',        # ← new (needed for filtering)
+    'apple_app',
+    'notes',
 ]
 
 MIDDLEWARE = [
@@ -125,3 +127,19 @@ STATICFILES_DIRS = []
 _dist = FRONTEND_DIR / 'dist'
 if _dist.exists():
     STATICFILES_DIRS.append(_dist)
+
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FormParser',
+    ],
+}

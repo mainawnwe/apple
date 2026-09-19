@@ -1,136 +1,151 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import NoteCard from './components/NoteCard'
+import NoteForm from './components/NoteForm'
+import NoteModal from './components/NoteModal'
+import { listNotes, createNote, updateNote, deleteNote } from './api/notes'
 
-const API_URL = '/api/tasks/'
-
-function App() {
-  const [tasks, setTasks] = useState([])
-  const [newTitle, setNewTitle] = useState('')
-  const [priority, setPriority] = useState('medium')
-  const [filter, setFilter] = useState('all')
+export default function App() {
+  const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const fetchTasks = async () => {
-    const res = await fetch(API_URL)
-    const data = await res.json()
-    setTasks(data)
-    setLoading(false)
-  }
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState('all')
 
-  useEffect(() => { fetchTasks() }, [])
+  const [showForm, setShowForm] = useState(false)
+  const [viewing, setViewing] = useState(null)
 
-  const addTask = async (e) => {
-    e.preventDefault()
-    if (!newTitle.trim()) return
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: newTitle.trim(), priority }),
-    })
-    if (res.ok) {
-      setNewTitle('')
-      setPriority('medium')
-      fetchTasks()
+  const refresh = async () => {
+    try {
+      setLoading(true)
+      const data = await listNotes()
+      setNotes(data)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const toggleTask = async (task) => {
-    await fetch(`${API_URL}${task.id}/`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed: !task.completed }),
+  useEffect(() => { refresh() }, [])
+
+  const handleCreate = async (fd) => {
+    await createNote(fd)
+    setShowForm(false)
+    refresh()
+  }
+
+  const handleUpdate = async (id, fd) => {
+    await updateNote(id, fd)
+    refresh()
+  }
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this note?')) return
+    await deleteNote(id)
+    setViewing(null)
+    refresh()
+  }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return notes.filter((n) => {
+      if (typeFilter !== 'all' && n.note_type !== typeFilter) return false
+      if (priorityFilter !== 'all' && n.priority !== priorityFilter) return false
+      if (!q) return true
+      return (
+        n.title.toLowerCase().includes(q) ||
+        n.content.toLowerCase().includes(q) ||
+        n.tags.toLowerCase().includes(q)
+      )
     })
-    fetchTasks()
-  }
-
-  const deleteTask = async (id) => {
-    await fetch(`${API_URL}${id}/`, { method: 'DELETE' })
-    fetchTasks()
-  }
-
-  const filtered = tasks.filter((t) => {
-    if (filter === 'active') return !t.completed
-    if (filter === 'completed') return t.completed
-    return true
-  })
-
-  const remaining = tasks.filter((t) => !t.completed).length
+  }, [notes, search, typeFilter, priorityFilter])
 
   return (
     <div className="app">
-      <div className="container">
-        <header>
-          <h1>My Tasks</h1>
-          <p className="subtitle">
-            {remaining === 0
-              ? 'All caught up 🎉'
-              : `${remaining} task${remaining !== 1 ? 's' : ''} remaining`}
-          </p>
-        </header>
+      <header className="topbar">
+        <div className="brand">
+          <span className="logo">◈</span>
+          <span>Notes</span>
+        </div>
 
-        <form className="add-form" onSubmit={addTask}>
+        <div className="search-wrap">
           <input
             type="text"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="What needs to be done?"
-            maxLength={200}
+            placeholder="Search notes, tags, content…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
-          <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-          <button type="submit">Add</button>
-        </form>
+        </div>
 
-        <div className="filters">
-          {['all', 'active', 'completed'].map((f) => (
+        <button className="btn-primary" onClick={() => setShowForm(true)}>
+          + New note
+        </button>
+      </header>
+
+      <div className="filterbar">
+        <div className="chip-group">
+          {['all', 'text', 'image', 'file'].map((t) => (
             <button
-              key={f}
-              className={filter === f ? 'active' : ''}
-              onClick={() => setFilter(f)}
+              key={t}
+              className={typeFilter === t ? 'chip active' : 'chip'}
+              onClick={() => setTypeFilter(t)}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {t}
             </button>
           ))}
         </div>
-
-        {loading ? (
-          <p className="empty">Loading...</p>
-        ) : filtered.length === 0 ? (
-          <p className="empty">Nothing here yet. Add a task above.</p>
-        ) : (
-          <ul className="task-list">
-            {filtered.map((task) => (
-              <li
-                key={task.id}
-                className={`task ${task.completed ? 'done' : ''} priority-${task.priority}`}
-              >
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => toggleTask(task)}
-                  />
-                  <span className="checkmark" />
-                </label>
-                <span className="title">{task.title}</span>
-                <span className={`badge ${task.priority}`}>{task.priority}</span>
-                <button
-                  className="delete"
-                  onClick={() => deleteTask(task.id)}
-                  aria-label="Delete task"
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="chip-group">
+          {['all', 'high', 'medium', 'low'].map((p) => (
+            <button
+              key={p}
+              className={priorityFilter === p ? `chip active dot-${p}` : `chip dot-${p}`}
+              onClick={() => setPriorityFilter(p)}
+            >
+              <span className={`dot ${p}`} /> {p}
+            </button>
+          ))}
+        </div>
       </div>
+
+      <main className="content">
+        {loading ? (
+          <p className="empty">Loading…</p>
+        ) : error ? (
+          <p className="empty error">Error: {error}</p>
+        ) : filtered.length === 0 ? (
+          <div className="empty-state">
+            <h2>No notes yet</h2>
+            <p>Click <strong>+ New note</strong> to create your first one.</p>
+          </div>
+        ) : (
+          <div className="grid">
+            {filtered.map((note) => (
+              <NoteCard key={note.id} note={note} onOpen={setViewing} />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {showForm && (
+        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>New note</h2>
+            <NoteForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
+          </div>
+        </div>
+      )}
+
+      {viewing && (
+        <NoteModal
+          note={viewing}
+          onClose={() => setViewing(null)}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
+        />
+      )}
     </div>
   )
 }
-
-export default App
