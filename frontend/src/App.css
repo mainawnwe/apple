@@ -16,10 +16,28 @@
   --high: #f87171;
   --medium: #fbbf24;
   --low: #34d399;
-  --container: 1400px;
   --side-pad: 1.5rem;
 }
+/* ===== DEBUG: viewport edges ===== */
+html::before,
+html::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: red;
+  z-index: 999999;
+  pointer-events: none;
+}
+html::before { left: 0; }
+html::after  { right: 0; }
 
+/* ===== DEBUG: element outlines ===== */
+.topbar        { outline: 2px solid lime;   outline-offset: -2px; }
+.topbar-inner  { outline: 2px solid cyan;   outline-offset: -2px; }
+.filterbar     { outline: 2px solid yellow; outline-offset: -2px; }
+.content       { outline: 2px solid orange; outline-offset: -2px; }
 html, body, #root { height: 100%; }
 
 body {
@@ -51,8 +69,6 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  max-width: var(--container);
-  margin: 0 auto;
   padding: 1rem var(--side-pad);
   width: 100%;
 }
@@ -138,8 +154,6 @@ body {
   gap: 1rem;
   padding: 1.5rem var(--side-pad) 0.5rem;
   flex-wrap: wrap;
-  max-width: var(--container);
-  margin: 0 auto;
   width: 100%;
 }
 
@@ -169,8 +183,6 @@ body {
 /* ---------- Grid ---------- */
 .content {
   padding: 1rem var(--side-pad) 2rem;
-  max-width: var(--container);
-  margin: 0 auto;
   width: 100%;
 }
 
