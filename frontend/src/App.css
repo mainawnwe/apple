@@ -446,22 +446,3 @@ body {
   .search-wrap { order: 3; max-width: 100%; flex-basis: 100%; }
   .note-form .row { grid-template-columns: 1fr; }
 }
-
-/* ===== DEBUG v2 ===== */
-html::before,
-html::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  background: red;
-  z-index: 999999;
-  pointer-events: none;
-}
-html::before { left: 0; }
-html::after  { right: 0; }
-
-.topbar-inner { background: lime !important; }
-.filterbar    { background: yellow !important; }
-.content      { background: orange !important; }
