@@ -28,12 +28,13 @@ class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
         fields = [
-            'id', 'title', 'content', 'note_type', 'priority',
+            'id', 'user',
+            'title', 'content', 'note_type', 'priority',
             'reminder_datetime', 'reminder_sent',
             'tags', 'created_at', 'updated_at',
             'attachments', 'upload_files',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'reminder_sent']
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at', 'reminder_sent']
 
     def create(self, validated_data):
         files = validated_data.pop('upload_files', [])

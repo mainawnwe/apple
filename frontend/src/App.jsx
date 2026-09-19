@@ -1,153 +1,37 @@
-import { useEffect, useMemo, useState } from 'react'
-import './App.css'
-import NoteCard from './components/NoteCard'
-import NoteForm from './components/NoteForm'
-import NoteModal from './components/NoteModal'
-import { listNotes, createNote, updateNote, deleteNote } from './api/notes'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import NotesPage from './pages/NotesPage'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
+import VerifyCode from './pages/VerifyCode'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import Profile from './pages/Profile'
 
 export default function App() {
-  const [notes, setNotes] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [priorityFilter, setPriorityFilter] = useState('all')
-
-  const [showForm, setShowForm] = useState(false)
-  const [viewing, setViewing] = useState(null)
-
-  const refresh = async () => {
-    try {
-      setLoading(true)
-      const data = await listNotes()
-      setNotes(data)
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { refresh() }, [])
-
-  const handleCreate = async (fd) => {
-    await createNote(fd)
-    setShowForm(false)
-    refresh()
-  }
-
-  const handleUpdate = async (id, fd) => {
-    await updateNote(id, fd)
-    refresh()
-  }
-
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this note?')) return
-    await deleteNote(id)
-    setViewing(null)
-    refresh()
-  }
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return notes.filter((n) => {
-      if (typeFilter !== 'all' && n.note_type !== typeFilter) return false
-      if (priorityFilter !== 'all' && n.priority !== priorityFilter) return false
-      if (!q) return true
-      return (
-        n.title.toLowerCase().includes(q) ||
-        n.content.toLowerCase().includes(q) ||
-        n.tags.toLowerCase().includes(q)
-      )
-    })
-  }, [notes, search, typeFilter, priorityFilter])
-
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="topbar-inner">
-          <div className="brand">
-            <span className="logo">◈</span>
-            <span>Notes</span>
-          </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/verify" element={<VerifyCode />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-          <div className="search-wrap">
-            <input
-              type="text"
-              placeholder="Search notes, tags, content…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+          <Route
+            path="/"
+            element={<ProtectedRoute><NotesPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/profile"
+            element={<ProtectedRoute><Profile /></ProtectedRoute>}
+          />
 
-          <button className="btn-primary" onClick={() => setShowForm(true)}>
-            + New note
-          </button>
-        </div>
-      </header>
-
-      <div className="filterbar">
-        <div className="chip-group">
-          {['all', 'text', 'image', 'file'].map((t) => (
-            <button
-              key={t}
-              className={typeFilter === t ? 'chip active' : 'chip'}
-              onClick={() => setTypeFilter(t)}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <div className="chip-group">
-          {['all', 'high', 'medium', 'low'].map((p) => (
-            <button
-              key={p}
-              className={priorityFilter === p ? `chip active dot-${p}` : `chip dot-${p}`}
-              onClick={() => setPriorityFilter(p)}
-            >
-              <span className={`dot ${p}`} /> {p}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <main className="content">
-        {loading ? (
-          <p className="empty">Loading…</p>
-        ) : error ? (
-          <p className="empty error">Error: {error}</p>
-        ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            <h2>No notes yet</h2>
-            <p>Click <strong>+ New note</strong> to create your first one.</p>
-          </div>
-        ) : (
-          <div className="grid">
-            {filtered.map((note) => (
-              <NoteCard key={note.id} note={note} onOpen={setViewing} />
-            ))}
-          </div>
-        )}
-      </main>
-
-      {showForm && (
-        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>New note</h2>
-            <NoteForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
-          </div>
-        </div>
-      )}
-
-      {viewing && (
-        <NoteModal
-          note={viewing}
-          onClose={() => setViewing(null)}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-        />
-      )}
-    </div>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

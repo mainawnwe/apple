@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Note(models.Model):
@@ -12,7 +13,9 @@ class Note(models.Model):
         ('medium', 'Medium'),
         ('high', 'High'),
     ]
-
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='notes'
+    )
     title = models.CharField(max_length=255, blank=True)
     content = models.TextField(blank=True)
     note_type = models.CharField(max_length=10, choices=NOTE_TYPES, default='text')
