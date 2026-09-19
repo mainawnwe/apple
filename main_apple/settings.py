@@ -15,7 +15,6 @@ SECRET_KEY = 'django-insecure-k61b1*whk455$o#xl&(!m#8(fjod0#(t!%0%m!r1#+16$3_ta8
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-ALLOWED_HOSTS = ['https://www.pythonanywhere.com/user/konaingkyaw']
 
 
 # Application definition
@@ -105,8 +104,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
-
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
@@ -117,5 +114,7 @@ MAILERS = {
     },
 }
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+ALLOWED_HOSTS = ['konaingkyaw.pythonanywhere.com']
 
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
