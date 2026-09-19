@@ -120,6 +120,7 @@ ALLOWED_HOSTS = [
 ]
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    FRONTEND_DIR / 'dist' / 'assets',   # Vite puts JS/CSS in dist/assets
-]
+STATICFILES_DIRS = []
+_dist = FRONTEND_DIR / 'dist'
+if _dist.exists():
+    STATICFILES_DIRS.append(_dist)
