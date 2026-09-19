@@ -145,9 +145,45 @@ REST_FRAMEWORK = {
 
 
 # ---------- Email ----------
-MAILERS = {
-    "default": {
-        "BACKEND": "django.core.mail.backends.console.EmailBackend",
-    },
-}
-DEFAULT_FROM_EMAIL = 'noreply@apple.local'
+# ---------- Email ----------
+import os as _os
+
+def _read_env_file():
+    """Read .env for local dev when env vars are not set."""
+    env_path = BASE_DIR / '.env'
+    if not env_path.exists():
+        return
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            k, v = line.split('=', 1)
+            _os.environ.setdefault(k.strip(), v.strip())
+
+_read_env_file()
+
+GMAIL_USER = _os.environ.get('GMAIL_USER', '')
+GMAIL_APP_PASSWORD = _os.environ.get('GMAIL_APP_PASSWORD', '')
+
+# Dev: console (terminal မှာ code ပေါ်)
+# Prod: Gmail SMTP (user ဆီ email ရောက်)
+if GMAIL_USER and GMAIL_APP_PASSWORD:
+    MAILERS = {
+        "default": {
+            "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+            "HOST": "smtp.gmail.com",
+            "PORT": 587,
+            "USERNAME": GMAIL_USER,
+            "PASSWORD": GMAIL_APP_PASSWORD,
+            "USE_TLS": True,
+        },
+    }
+    DEFAULT_FROM_EMAIL = GMAIL_USER
+else:
+    MAILERS = {
+        "default": {
+            "BACKEND": "django.core.mail.backends.console.EmailBackend",
+        },
+    }
+    DEFAULT_FROM_EMAIL = 'noreply@apple.local'
