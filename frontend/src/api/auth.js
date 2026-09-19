@@ -81,6 +81,15 @@ export async function forgotPassword({ email }) {
   return handle(res)
 }
 
+export async function verifyResetCode({ email, code }) {
+  const res = await fetch(`${API}verify-reset-code/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code }),
+  })
+  return handle(res)
+}
+
 export async function resetPassword({ email, code, new_password }) {
   const res = await fetch(`${API}reset-password/`, {
     method: 'POST',

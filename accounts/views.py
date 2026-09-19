@@ -190,6 +190,34 @@ def reset_password(request):
 
     return Response({'detail': 'Password reset. You can now log in.'})
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_reset_code(request):
+    """Verify a password-reset code WITHOUT consuming it.
+    Returns success if valid so the frontend can reveal password fields.
+    """
+    serializer = VerifySignupSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    email = serializer.validated_data['email'].lower()
+    code = serializer.validated_data['code']
+
+    try:
+        user = User.objects.get(email__iexact=email)
+    except User.DoesNotExist:
+        return Response(
+            {'detail': 'Invalid email or code.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    profile = user.profile
+    if profile.verification_purpose != 'password_reset' or not profile.is_code_valid(code):
+        return Response(
+            {'detail': 'Invalid or expired code.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return Response({'detail': 'Code verified.'})
 
 # ---------- Change password (authenticated) ----------
 
