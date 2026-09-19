@@ -66,23 +66,25 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
-          <span className="logo">◈</span>
-          <span>Notes</span>
-        </div>
+        <div className="topbar-inner">
+          <div className="brand">
+            <span className="logo">◈</span>
+            <span>Notes</span>
+          </div>
 
-        <div className="search-wrap">
-          <input
-            type="text"
-            placeholder="Search notes, tags, content…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+          <div className="search-wrap">
+            <input
+              type="text"
+              placeholder="Search notes, tags, content…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        <button className="btn-primary" onClick={() => setShowForm(true)}>
-          + New note
-        </button>
+          <button className="btn-primary" onClick={() => setShowForm(true)}>
+            + New note
+          </button>
+        </div>
       </header>
 
       <div className="filterbar">
