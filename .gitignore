@@ -5,3 +5,7 @@ venv/
 .env
 staticfiles/
 *.log
+
+# React
+frontend/node_modules/
+frontend/dist/

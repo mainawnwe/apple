@@ -1,12 +1,8 @@
-
-from pathlib import Path
 import os
+from pathlib import Path
 
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
+FRONTEND_DIR = BASE_DIR / 'frontend'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
@@ -44,7 +40,10 @@ ROOT_URLCONF = 'main_apple.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [
+            BASE_DIR / 'templates',
+            FRONTEND_DIR / 'dist',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -114,7 +113,13 @@ MAILERS = {
     },
 }
 
-ALLOWED_HOSTS = ['konaingkyaw.pythonanywhere.com']
-
+ALLOWED_HOSTS = [
+    'konaingkyaw.pythonanywhere.com',
+    '127.0.0.1',
+    'localhost',
+]
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    FRONTEND_DIR / 'dist' / 'assets',   # Vite puts JS/CSS in dist/assets
+]
