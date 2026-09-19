@@ -172,11 +172,13 @@ if GMAIL_USER and GMAIL_APP_PASSWORD:
     MAILERS = {
         "default": {
             "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
-            "HOST": "smtp.gmail.com",
-            "PORT": 587,
-            "USERNAME": GMAIL_USER,
-            "PASSWORD": GMAIL_APP_PASSWORD,
-            "USE_TLS": True,
+            "OPTIONS": {
+                "host": "smtp.gmail.com",
+                "port": 587,
+                "username": GMAIL_USER,
+                "password": GMAIL_APP_PASSWORD,
+                "use_tls": True,
+            },
         },
     }
     DEFAULT_FROM_EMAIL = GMAIL_USER
