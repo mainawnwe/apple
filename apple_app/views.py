@@ -1,8 +1,14 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from rest_framework import viewsets
 
-def home(request):
-    return render(request, 'home.html')
+from .models import Task
+from .serializers import TaskSerializer
+
 
 def hello_api(request):
     return JsonResponse({'message': 'Hello from Django!'})
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
