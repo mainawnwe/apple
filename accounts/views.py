@@ -5,7 +5,11 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-
+from .models import Profile, PendingSignup
+from django.contrib.auth.hashers import make_password
+from django.utils import timezone
+from datetime import timedelta
+from .utils import generate_code
 from .models import Profile
 from .serializers import (
     UserSerializer,
@@ -22,18 +26,25 @@ from .utils import issue_code, send_verification_email
 
 # ---------- Signup + verification ----------
 
+
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user = serializer.save()
+    pending = serializer.save()
 
-    code = issue_code(user.profile, 'signup')
-    send_verification_email(user, code, 'signup')
+    send_verification_email(
+        email=pending.email,
+        username=pending.username,
+        code=pending.code,
+        purpose='signup',
+    )
 
     return Response(
-        {'detail': 'Verification code sent.', 'email': user.email},
+        {'detail': 'Verification code sent.', 'email': pending.email},
         status=status.HTTP_201_CREATED,
     )
 
@@ -48,32 +59,68 @@ def verify_signup(request):
     code = serializer.validated_data['code']
 
     try:
-        user = User.objects.get(email__iexact=email)
-    except User.DoesNotExist:
+        pending = PendingSignup.objects.get(email__iexact=email)
+    except PendingSignup.DoesNotExist:
         return Response(
             {'detail': 'Invalid email or code.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    profile = user.profile
-    if profile.verification_purpose != 'signup' or not profile.is_code_valid(code):
+    if not pending.is_code_valid(code):
         return Response(
             {'detail': 'Invalid or expired code.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Activate and issue token
-    user.is_active = True
-    user.save(update_fields=['is_active'])
-    profile.email_verified = True
-    profile.clear_code()
+    # ⚠️ Race condition: တစ်ခြားလူက ဒီ username ကို ယူသွားပြီးလား?
+    if User.objects.filter(username__iexact=pending.username).exists():
+        pending.delete()
+        return Response(
+            {
+                'detail': (
+                    f'Sorry, the username "{pending.username}" was just taken '
+                    'by someone else. Please sign up again with a different username.'
+                ),
+                'code': 'username_taken',
+            },
+            status=status.HTTP_409_CONFLICT,
+        )
 
+    # Email ကို တစ်ခြားလူ မှတ်ပုံတင်ပြီးလား? (rare)
+    if User.objects.filter(email__iexact=pending.email).exists():
+        pending.delete()
+        return Response(
+            {
+                'detail': 'This email was just registered. Please try logging in.',
+                'code': 'email_taken',
+            },
+            status=status.HTTP_409_CONFLICT,
+        )
+
+    # NOW create the real User
+    user = User(
+        username=pending.username,
+        email=pending.email,
+        is_active=True,
+    )
+    user.password = pending.password_hash   # already hashed
+    user.save()
+
+    # Mark profile as verified
+    profile, _ = Profile.objects.get_or_create(user=user)
+    profile.email_verified = True
+    profile.save(update_fields=['email_verified'])
+
+    # Delete pending signup
+    pending.delete()
+
+    # Issue token
     token, _ = Token.objects.get_or_create(user=user)
+
     return Response({
         'token': token.key,
         'user': UserSerializer(user).data,
     })
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -83,16 +130,38 @@ def resend_code(request):
     email = serializer.validated_data['email'].lower()
     purpose = serializer.validated_data['purpose']
 
+    if purpose == 'signup':
+        try:
+            pending = PendingSignup.objects.get(email__iexact=email)
+        except PendingSignup.DoesNotExist:
+            return Response({'detail': 'If the account exists, a code was sent.'})
+
+        pending.code = generate_code()
+        pending.code_expires = timezone.now() + timedelta(minutes=10)
+        pending.save(update_fields=['code', 'code_expires'])
+
+        send_verification_email(
+            email=pending.email,
+            username=pending.username,
+            code=pending.code,
+            purpose='signup',
+        )
+        return Response({'detail': 'If the account exists, a code was sent.'})
+
+    # password_reset — existing user
     try:
         user = User.objects.get(email__iexact=email)
     except User.DoesNotExist:
-        # Don't leak whether the email exists
         return Response({'detail': 'If the account exists, a code was sent.'})
 
-    code = issue_code(user.profile, purpose)
-    send_verification_email(user, code, purpose)
+    code = issue_code(user.profile, 'password_reset')
+    send_verification_email(
+        email=user.email,
+        username=user.username,
+        code=code,
+        purpose='password_reset',
+    )
     return Response({'detail': 'If the account exists, a code was sent.'})
-
 
 # ---------- Login / Logout / Me ----------
 
@@ -143,6 +212,7 @@ def me(request):
 
 # ---------- Forgot / Reset password ----------
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def forgot_password(request):
@@ -156,9 +226,13 @@ def forgot_password(request):
         return Response({'detail': 'If the account exists, a code was sent.'})
 
     code = issue_code(user.profile, 'password_reset')
-    send_verification_email(user, code, 'password_reset')
+    send_verification_email(
+        email=user.email,
+        username=user.username,
+        code=code,
+        purpose='password_reset',
+    )
     return Response({'detail': 'If the account exists, a code was sent.'})
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

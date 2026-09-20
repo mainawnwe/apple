@@ -33,27 +33,36 @@ export default function VerifyCode() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setInfo('')
+  e.preventDefault()
+  setError('')
+  setInfo('')
 
-    if (code.length !== 6) {
-      return setError('Please enter the 6-digit code.')
-    }
-
-    setLoading(true)
-    try {
-      const data = await verifySignup({ email, code })
-      login(data.token, data.user)
-      navigate('/', { replace: true })
-    } catch (err) {
-      setError(err.data?.detail || err.message || 'Verification failed')
-      setCode('')
-      inputRef.current?.focus()
-    } finally {
-      setLoading(false)
-    }
+  if (code.length !== 6) {
+    return setError('Please enter the 6-digit code.')
   }
+
+  setLoading(true)
+  try {
+    const data = await verifySignup({ email, code })
+    login(data.token, data.user)
+    navigate('/', { replace: true })
+  } catch (err) {
+    // Username race condition — ပြန် signup လုပ်ခိုင်း
+    if (err.status === 409 && err.data?.code === 'username_taken') {
+      setError(err.data.detail)
+      // 3 seconds ကြာရင် signup page ကို ပို့
+      setTimeout(() => {
+        navigate('/signup', { replace: true })
+      }, 3000)
+      return
+    }
+    setError(err.data?.detail || err.message || 'Verification failed')
+    setCode('')
+    inputRef.current?.focus()
+  } finally {
+    setLoading(false)
+  }
+}
 
   const handleResend = async () => {
     setError('')

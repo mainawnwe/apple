@@ -43,3 +43,27 @@ class Profile(models.Model):
 def create_profile_for_new_user(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
+
+class PendingSignup(models.Model):
+    """Temporary storage for unverified signups.
+    Promoted to a real User only after the verification code is confirmed.
+
+    Username is NOT unique here — Twitter-style. Multiple users can
+    temporarily share a username; the real conflict is caught at the
+    final User creation step.
+    """
+    username = models.CharField(max_length=150)      # ← unique ဖျက်
+    email = models.EmailField(unique=True)            # ← email ပဲ unique
+    password_hash = models.CharField(max_length=128)
+    code = models.CharField(max_length=6)
+    code_expires = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Pending<{self.username} | {self.email}>"
+
+    def is_code_valid(self, code):
+        return self.code == code and self.code_expires > timezone.now()

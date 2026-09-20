@@ -26,7 +26,7 @@ def issue_code(profile, purpose, ttl_minutes=10):
     return code
 
 
-def send_verification_email(user, code, purpose):
+def send_verification_email(email, username, code, purpose):
     subject_map = {
         'signup': 'Verify your email address',
         'password_reset': 'Reset your password',
@@ -34,7 +34,7 @@ def send_verification_email(user, code, purpose):
     subject = subject_map.get(purpose, 'Your verification code')
 
     html = render_to_string('emails/verification.html', {
-        'username': user.username,
+        'username': username,
         'code': code,
         'purpose': purpose,
         'ttl_minutes': 10,
@@ -44,7 +44,7 @@ def send_verification_email(user, code, purpose):
         subject=subject,
         message=f'Your verification code is {code}. It expires in 10 minutes.',
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
+        recipient_list=[email],
         html_message=html,
         fail_silently=False,
     )
