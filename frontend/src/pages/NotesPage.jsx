@@ -6,6 +6,8 @@ import NoteForm from '../components/NoteForm'
 import NoteModal from '../components/NoteModal'
 import { listNotes, createNote, updateNote, deleteNote } from '../api/notes'
 import { useAuth } from '../context/AuthContext'
+import AppHeader from '../components/AppHeader'
+import { useConfirm } from '../context/ConfirmContext'
 
 export default function NotesPage() {
   const { user, logout } = useAuth()
@@ -21,6 +23,7 @@ export default function NotesPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [viewing, setViewing] = useState(null)
+  const confirm = useConfirm()
 
   const refresh = async () => {
     try {
@@ -48,7 +51,16 @@ export default function NotesPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this note?')) return
+    const note = notes.find((n) => n.id === id)
+    const ok = await confirm({
+      title: 'Delete this note?',
+      message: note?.title
+        ? `"${note.title}" and all its attachments will be permanently deleted.`
+        : 'This note and all its attachments will be permanently deleted.',
+      confirmText: 'Delete',
+      variant: 'danger',
+    })
+    if (!ok) return
     await deleteNote(id)
     setViewing(null)
     refresh()
@@ -75,35 +87,20 @@ export default function NotesPage() {
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div className="topbar-inner">
-          <div className="brand">
-            <span className="logo">◈</span>
-            <span>Notes</span>
-          </div>
-
-          <div className="search-wrap">
-            <input
-              type="text"
-              placeholder="Search notes, tags, content…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <button className="btn-primary" onClick={() => setShowForm(true)}>
-            + New note
-          </button>
-
-          <Link to="/profile" className="btn-ghost" title="Profile">
-            👤 {user?.username}
-          </Link>
-
-          <button className="btn-ghost" onClick={handleLogout}>
-            Logout
-          </button>
+      <AppHeader>
+        <div className="search-wrap">
+          <input
+            type="text"
+            placeholder="Search notes, tags, content…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-      </header>
+
+        <button className="btn-primary" onClick={() => setShowForm(true)}>
+          + New note
+        </button>
+      </AppHeader>
 
       <div className="filterbar">
         <div className="chip-group">

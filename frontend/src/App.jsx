@@ -8,10 +8,13 @@ import VerifyCode from './pages/VerifyCode'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
+import TasksPage from './pages/TasksPage'
+import { ConfirmProvider } from './context/ConfirmContext'
 
 export default function App() {
   return (
     <AuthProvider>
+      <ConfirmProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -28,10 +31,15 @@ export default function App() {
             path="/profile"
             element={<ProtectedRoute><Profile /></ProtectedRoute>}
           />
+          <Route
+            path="/tasks"
+            element={<ProtectedRoute><TasksPage /></ProtectedRoute>}
+          />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </ConfirmProvider>
     </AuthProvider>
   )
 }

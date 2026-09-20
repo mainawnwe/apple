@@ -39,8 +39,18 @@ export default function NoteModal({ note, onClose, onUpdate, onDelete }) {
 
             {note.content && <p className="modal-content">{note.content}</p>}
 
-            {note.reminder_datetime && (
-              <p className="reminder-line">⏰ Reminder: {new Date(note.reminder_datetime).toLocaleString()}</p>
+            {task.reminder_datetime && (
+              <div className="task-detail-row reminder-line">
+                <span className="label">⏰ Reminder</span>
+                <span>
+                  {formatDate(task.reminder_datetime)}
+                  {task.reminder_sent && (
+                    <span style={{ marginLeft: '0.5rem', color: '#6ee7b7', fontSize: '0.75rem' }}>
+                      ✓ sent
+                    </span>
+                  )}
+                </span>
+              </div>
             )}
 
             {note.tags && (

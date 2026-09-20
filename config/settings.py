@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'apple_app',
     'notes',
     'accounts',                     # ← NEW
+    'tasks'
 ]
 
 MIDDLEWARE = [
