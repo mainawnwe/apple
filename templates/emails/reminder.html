@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Reminder</title>
+</head>
+<body style="margin:0;padding:0;background:#0b0a1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0b0a1a;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#17162e;border-radius:16px;padding:32px;border:1px solid rgba(255,255,255,0.08);">
+          <tr>
+            <td style="color:#e7e7f0;font-size:18px;font-weight:700;padding-bottom:8px;">
+              ◈ Notes
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#a3a3b8;font-size:14px;padding-bottom:24px;">
+              Hi {{ username }}, you have a reminder.
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-bottom:16px;">
+              <div style="display:inline-block;background:linear-gradient(135deg,#a78bfa,#60a5fa);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">
+                {{ item_type }}
+              </div>
+              {% if priority %}
+              <span style="margin-left:8px;color:#a3a3b8;font-size:11px;font-weight:600;text-transform:uppercase;">
+                {{ priority }} priority
+              </span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="color:#e7e7f0;font-size:22px;font-weight:700;padding-bottom:12px;">
+              {{ title }}
+            </td>
+          </tr>
+
+          {% if content %}
+          <tr>
+            <td style="color:#a3a3b8;font-size:14px;line-height:1.6;padding-bottom:16px;">
+              {{ content|truncatechars:300 }}
+            </td>
+          </tr>
+          {% endif %}
+
+          {% if due_date %}
+          <tr>
+            <td style="padding:8px 0;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="color:#64647e;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding-right:12px;">
+                    Due
+                  </td>
+                  <td style="color:#e7e7f0;font-size:14px;">
+                    {{ due_date|date:"D, M j, Y · g:i A" }}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% if reminder_datetime %}
+          <tr>
+            <td style="padding:8px 0;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="color:#64647e;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding-right:12px;">
+                    Reminder
+                  </td>
+                  <td style="color:#fcd34d;font-size:14px;">
+                    {{ reminder_datetime|date:"D, M j, Y · g:i A" }}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% if tags %}
+          <tr>
+            <td style="padding-top:16px;">
+              {% for tag in tags|slice:":5" %}
+              <span style="display:inline-block;color:#a78bfa;background:rgba(167,139,250,0.12);padding:2px 8px;border-radius:5px;font-size:12px;margin-right:4px;">
+                #{{ tag }}
+              </span>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endif %}
+
+          <tr>
+            <td style="padding-top:28px;border-top:1px solid rgba(255,255,255,0.08);margin-top:24px;">
+              <a href="https://konaingkyaw.pythonanywhere.com" style="color:#a78bfa;text-decoration:none;font-size:13px;font-weight:600;">
+                Open in Notes →
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
