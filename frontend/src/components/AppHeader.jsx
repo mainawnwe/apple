@@ -2,24 +2,27 @@ import { useEffect, useState } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import GlobalSearch from './GlobalSearch'
+import ThemeToggle from './ThemeToggle'
 
 export default function AppHeader({ children }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [searchOpen, setSearchOpen] = useState(false)
 
-  // Global Ctrl+K / Cmd+K listener (capture phase to bypass browser)
   useEffect(() => {
     const handler = (e) => {
-      // Ctrl+K or Cmd+K
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') {
+      const isK =
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        !e.altKey &&
+        (e.key.toLowerCase() === 'k' || e.key === '/')
+      if (isK) {
         e.preventDefault()
         e.stopPropagation()
         setSearchOpen(true)
         return false
       }
     }
-    // capture = true → runs BEFORE browser default
     window.addEventListener('keydown', handler, true)
     return () => window.removeEventListener('keydown', handler, true)
   }, [])
@@ -35,34 +38,64 @@ export default function AppHeader({ children }) {
     <>
       <header className="topbar">
         <div className="topbar-inner">
-          <div className="brand">
-            <span className="logo">◈</span>
-            <span>Notes</span>
+          {/* ---------- LEFT: brand + nav ---------- */}
+          <div className="topbar-left">
+            <Link to="/" className="brand">
+              <span className="logo">◈</span>
+              <span>Notes</span>
+            </Link>
+
+            <nav className="nav-tabs">
+              <NavLink to="/" end className={tabClass}>Notes</NavLink>
+              <NavLink to="/tasks" className={tabClass}>Tasks</NavLink>
+              <NavLink to="/stats" className={tabClass}>Stats</NavLink>
+            </nav>
           </div>
 
-          <nav className="nav-tabs">
-            <NavLink to="/" end className={tabClass}>Notes</NavLink>
-            <NavLink to="/tasks" className={tabClass}>Tasks</NavLink>
-            <NavLink to="/stats" className={tabClass}>Stats</NavLink>
-          </nav>
+          {/* ---------- CENTER: page-specific actions ---------- */}
+          <div className="topbar-center">
+            {children}
+          </div>
 
-          {children}
+          {/* ---------- RIGHT: user menu ---------- */}
+          <div className="topbar-right">
+            <button
+              className="btn-ghost search-trigger"
+              onClick={() => setSearchOpen(true)}
+              title="Search (Ctrl+K or Ctrl+/)"
+            >
+              🔍
+              <kbd className="kbd-hint">Ctrl+K</kbd>
+            </button>
 
-          <button
-            className="btn-ghost search-trigger"
-            onClick={() => setSearchOpen(true)}
-            title="Search (Ctrl+K)"
-          >
-            🔍
-            <kbd className="kbd-hint">Ctrl+K</kbd>
-          </button>
+            <Link to="/profile" className="btn-ghost user-btn" title="Profile">
+              👤 {user?.username}
+            </Link>
+            <div className="topbar-right">
+              <ThemeToggle />
 
-          <Link to="/profile" className="btn-ghost" title="Profile">
-            👤 {user?.username}
-          </Link>
-          <button className="btn-ghost" onClick={handleLogout}>
-            Logout
-          </button>
+              <button
+                className="btn-ghost search-trigger"
+                onClick={() => setSearchOpen(true)}
+                title="Search (Ctrl+K or Ctrl+/)"
+              >
+                🔍
+                <kbd className="kbd-hint">Ctrl+K</kbd>
+              </button>
+
+              <Link to="/profile" className="btn-ghost user-btn" title="Profile">
+                👤 {user?.username}
+              </Link>
+
+              <button className="btn-ghost" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+
+            <button className="btn-ghost" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
