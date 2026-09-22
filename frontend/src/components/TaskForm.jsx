@@ -17,7 +17,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
     if (!title.trim()) return
     setSubmitting(true)
     try {
@@ -34,8 +34,19 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
     }
   }
 
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
   return (
-    <form className="note-form" onSubmit={handleSubmit}>
+    <form
+      className="note-form"
+      onSubmit={handleSubmit}
+      onKeyDown={handleKeyDown}
+    >
       <input
         type="text"
         placeholder="What needs to be done?"
@@ -94,6 +105,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
         </button>
         <button type="submit" className="btn-primary" disabled={submitting}>
           {submitting ? 'Saving…' : initial ? 'Save changes' : 'Create task'}
+          <kbd className="kbd-hint">Ctrl+↵</kbd>
         </button>
       </div>
     </form>

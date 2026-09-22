@@ -4,6 +4,14 @@ import NoteForm from './NoteForm'
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|svg|bmp)$/i
 const isImage = (a) => a.content_type?.startsWith('image/') || IMAGE_EXT.test(a.original_name)
 
+function formatDate(iso) {
+  if (!iso) return null
+  return new Date(iso).toLocaleString([], {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}
+
 export default function NoteModal({ note, onClose, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false)
 
@@ -12,6 +20,10 @@ export default function NoteModal({ note, onClose, onUpdate, onDelete }) {
     setEditing(false)
     onClose()
   }
+
+  const tags = note.tags
+    ? note.tags.split(',').map((t) => t.trim()).filter(Boolean)
+    : []
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -28,10 +40,11 @@ export default function NoteModal({ note, onClose, onUpdate, onDelete }) {
         ) : (
           <>
             <div className="modal-head">
-              <div>
+              <div style={{ flex: 1 }}>
                 <h2>{note.title || 'Untitled'}</h2>
                 <p className="meta">
-                  {new Date(note.created_at).toLocaleString()} · <span className={`pill ${note.priority}`}>{note.priority}</span>
+                  {formatDate(note.created_at)} ·{' '}
+                  <span className={`pill ${note.priority}`}>{note.priority}</span>
                 </p>
               </div>
               <button className="close-x" onClick={onClose}>×</button>
@@ -39,12 +52,12 @@ export default function NoteModal({ note, onClose, onUpdate, onDelete }) {
 
             {note.content && <p className="modal-content">{note.content}</p>}
 
-            {task.reminder_datetime && (
+            {note.reminder_datetime && (
               <div className="task-detail-row reminder-line">
                 <span className="label">⏰ Reminder</span>
                 <span>
-                  {formatDate(task.reminder_datetime)}
-                  {task.reminder_sent && (
+                  {formatDate(note.reminder_datetime)}
+                  {note.reminder_sent && (
                     <span style={{ marginLeft: '0.5rem', color: '#6ee7b7', fontSize: '0.75rem' }}>
                       ✓ sent
                     </span>
@@ -53,11 +66,9 @@ export default function NoteModal({ note, onClose, onUpdate, onDelete }) {
               </div>
             )}
 
-            {note.tags && (
+            {tags.length > 0 && (
               <div className="modal-tags">
-                {note.tags.split(',').map((t) => t.trim()).filter(Boolean).map((t) => (
-                  <span key={t} className="tag">#{t}</span>
-                ))}
+                {tags.map((t) => <span key={t} className="tag">#{t}</span>)}
               </div>
             )}
 

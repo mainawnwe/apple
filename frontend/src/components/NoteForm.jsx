@@ -23,7 +23,7 @@ export default function NoteForm({ initial, onSubmit, onCancel }) {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
     if (!title.trim() && !content.trim() && files.length === 0) return
     setSubmitting(true)
     const fd = new FormData()
@@ -41,8 +41,19 @@ export default function NoteForm({ initial, onSubmit, onCancel }) {
     }
   }
 
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
   return (
-    <form className="note-form" onSubmit={handleSubmit}>
+    <form
+      className="note-form"
+      onSubmit={handleSubmit}
+      onKeyDown={handleKeyDown}
+    >
       <input
         type="text"
         placeholder="Title"
@@ -125,9 +136,12 @@ export default function NoteForm({ initial, onSubmit, onCancel }) {
       )}
 
       <div className="form-actions">
-        <button type="button" className="btn-ghost" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn-ghost" onClick={onCancel}>
+          Cancel
+        </button>
         <button type="submit" className="btn-primary" disabled={submitting}>
           {submitting ? 'Saving…' : initial ? 'Save changes' : 'Create note'}
+          <kbd className="kbd-hint">Ctrl+↵</kbd>
         </button>
       </div>
     </form>

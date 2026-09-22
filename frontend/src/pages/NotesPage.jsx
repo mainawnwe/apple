@@ -1,18 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import '../App.css'
+import AppHeader from '../components/AppHeader'
 import NoteCard from '../components/NoteCard'
 import NoteForm from '../components/NoteForm'
 import NoteModal from '../components/NoteModal'
+import TagsSidebar from '../components/TagsSidebar'
 import { listNotes, createNote, updateNote, deleteNote } from '../api/notes'
-import { useAuth } from '../context/AuthContext'
-import AppHeader from '../components/AppHeader'
 import { useConfirm } from '../context/ConfirmContext'
 
 export default function NotesPage() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -20,9 +17,13 @@ export default function NotesPage() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
+  const [activeTags, setActiveTags] = useState([])
 
   const [showForm, setShowForm] = useState(false)
   const [viewing, setViewing] = useState(null)
+
+  const location = useLocation()
+  const navigate = useNavigate()
   const confirm = useConfirm()
 
   const refresh = async () => {
@@ -38,6 +39,32 @@ export default function NotesPage() {
   }
 
   useEffect(() => { refresh() }, [])
+
+  useEffect(() => {
+    const openNote = location.state?.openNote
+    if (!openNote) return
+    setViewing(openNote)
+    navigate(location.pathname, { replace: true, state: {} })
+  }, [location.state, navigate])
+
+  useEffect(() => {
+    const handler = (e) => {
+      const tag = document.activeElement?.tagName
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return
+
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        setShowForm(true)
+        return
+      }
+      if (e.key === '/') {
+        e.preventDefault()
+        document.querySelector('.search-wrap input')?.focus()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const handleCreate = async (fd) => {
     await createNote(fd)
@@ -66,16 +93,34 @@ export default function NotesPage() {
     refresh()
   }
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login', { replace: true })
+  const toggleTag = (name) => {
+    setActiveTags((prev) =>
+      prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
+    )
   }
+
+  const clearTags = () => setActiveTags([])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return notes.filter((n) => {
       if (typeFilter !== 'all' && n.note_type !== typeFilter) return false
       if (priorityFilter !== 'all' && n.priority !== priorityFilter) return false
+
+      // Tag filter
+      if (activeTags.length > 0) {
+        const itemTags = (n.tags || '').split(',').map((t) => t.trim()).filter(Boolean)
+        const wantsUntagged = activeTags.includes('__untagged__')
+        const specificTags = activeTags.filter((t) => t !== '__untagged__')
+
+        if (wantsUntagged && itemTags.length > 0) return false
+        if (specificTags.length > 0) {
+          // AND match: item must have ALL selected tags
+          const hasAll = specificTags.every((t) => itemTags.includes(t))
+          if (!hasAll) return false
+        }
+      }
+
       if (!q) return true
       return (
         n.title.toLowerCase().includes(q) ||
@@ -83,7 +128,7 @@ export default function NotesPage() {
         n.tags.toLowerCase().includes(q)
       )
     })
-  }, [notes, search, typeFilter, priorityFilter])
+  }, [notes, search, typeFilter, priorityFilter, activeTags])
 
   return (
     <div className="app">
@@ -99,52 +144,64 @@ export default function NotesPage() {
 
         <button className="btn-primary" onClick={() => setShowForm(true)}>
           + New note
+          <kbd className="kbd-hint">N</kbd>
         </button>
       </AppHeader>
 
-      <div className="filterbar">
-        <div className="chip-group">
-          {['all', 'text', 'image', 'file'].map((t) => (
-            <button
-              key={t}
-              className={typeFilter === t ? 'chip active' : 'chip'}
-              onClick={() => setTypeFilter(t)}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <div className="chip-group">
-          {['all', 'high', 'medium', 'low'].map((p) => (
-            <button
-              key={p}
-              className={priorityFilter === p ? `chip active dot-${p}` : `chip dot-${p}`}
-              onClick={() => setPriorityFilter(p)}
-            >
-              <span className={`dot ${p}`} /> {p}
-            </button>
-          ))}
+      <div className="layout-with-sidebar">
+        <TagsSidebar
+          items={notes}
+          activeTags={activeTags}
+          onToggleTag={toggleTag}
+          onClearTags={clearTags}
+        />
+
+        <div className="main-area">
+          <div className="filterbar">
+            <div className="chip-group">
+              {['all', 'text', 'image', 'file'].map((t) => (
+                <button
+                  key={t}
+                  className={typeFilter === t ? 'chip active' : 'chip'}
+                  onClick={() => setTypeFilter(t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="chip-group">
+              {['all', 'high', 'medium', 'low'].map((p) => (
+                <button
+                  key={p}
+                  className={priorityFilter === p ? `chip active dot-${p}` : `chip dot-${p}`}
+                  onClick={() => setPriorityFilter(p)}
+                >
+                  <span className={`dot ${p}`} /> {p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <main className="content">
+            {loading ? (
+              <p className="empty">Loading…</p>
+            ) : error ? (
+              <p className="empty error">Error: {error}</p>
+            ) : filtered.length === 0 ? (
+              <div className="empty-state">
+                <h2>No notes match</h2>
+                <p>Try clearing filters or search.</p>
+              </div>
+            ) : (
+              <div className="grid">
+                {filtered.map((note) => (
+                  <NoteCard key={note.id} note={note} onOpen={setViewing} />
+                ))}
+              </div>
+            )}
+          </main>
         </div>
       </div>
-
-      <main className="content">
-        {loading ? (
-          <p className="empty">Loading…</p>
-        ) : error ? (
-          <p className="empty error">Error: {error}</p>
-        ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            <h2>No notes yet</h2>
-            <p>Click <strong>+ New note</strong> to create your first one.</p>
-          </div>
-        ) : (
-          <div className="grid">
-            {filtered.map((note) => (
-              <NoteCard key={note.id} note={note} onOpen={setViewing} />
-            ))}
-          </div>
-        )}
-      </main>
 
       {showForm && (
         <div className="modal-backdrop" onClick={() => setShowForm(false)}>
