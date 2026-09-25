@@ -2,11 +2,10 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.core.mail import EmailMultiAlternatives
-from django.conf import settings
+
 from notes.models import Note
 from tasks.models import Task
 
@@ -54,7 +53,6 @@ class Command(BaseCommand):
                 self.stdout.write('\nStopped.')
             return
 
-        # Single run
         self._run_once(options)
 
     # ---------- The actual work ----------
@@ -104,6 +102,16 @@ class Command(BaseCommand):
             f'Notes: {due_notes.count()}, Tasks: {due_tasks.count()}.'
         ))
 
+    # ---------- Common email headers (avoid spam) ----------
+    def _spam_safe_headers(self, item_type, item_id):
+        return {
+            'X-Entity-Ref-ID': f'{item_type}-{item_id}-{timezone.now().timestamp()}',
+            'List-Unsubscribe': f'<mailto:{settings.DEFAULT_FROM_EMAIL}?subject=unsubscribe>',
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            'Precedence': 'bulk',
+            'Auto-Submitted': 'auto-generated',
+        }
+
     # ---------- Email helpers ----------
     def _send_note_reminder(self, note, dry_run):
         if not note.user.email:
@@ -123,19 +131,28 @@ class Command(BaseCommand):
             'username': note.user.username,
         })
 
+        text_body = (
+            f'Hi {note.user.username},\n\n'
+            f'You have a reminder:\n\n'
+            f'{note.title or "Untitled"}\n'
+            f'{note.content or ""}\n\n'
+            f'View: https://konaingkyaw.pythonanywhere.com'
+        )
+
         if dry_run:
             self.stdout.write(f'[DRY RUN] Would email {note.user.email}: {subject}')
             return True
 
         try:
-            send_mail(
+            msg = EmailMultiAlternatives(
                 subject=subject,
-                message=f'Reminder: {note.title or "Untitled"}',
+                body=text_body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[note.user.email],
-                html_message=html,
-                fail_silently=False,
+                to=[note.user.email],
+                headers=self._spam_safe_headers('note', note.id),
             )
+            msg.attach_alternative(html, 'text/html')
+            msg.send(fail_silently=False)
             self.stdout.write(self.style.SUCCESS(
                 f'✓ Note reminder sent to {note.user.email}: {note.title}'
             ))
@@ -165,19 +182,28 @@ class Command(BaseCommand):
             'username': task.user.username,
         })
 
+        text_body = (
+            f'Hi {task.user.username},\n\n'
+            f'Task due:\n\n'
+            f'{task.title}\n'
+            f'{task.description or ""}\n\n'
+            f'View: https://konaingkyaw.pythonanywhere.com/tasks'
+        )
+
         if dry_run:
             self.stdout.write(f'[DRY RUN] Would email {task.user.email}: {subject}')
             return True
 
         try:
-            send_mail(
+            msg = EmailMultiAlternatives(
                 subject=subject,
-                message=f'Task due: {task.title}',
+                body=text_body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[task.user.email],
-                html_message=html,
-                fail_silently=False,
+                to=[task.user.email],
+                headers=self._spam_safe_headers('task', task.id),
             )
+            msg.attach_alternative(html, 'text/html')
+            msg.send(fail_silently=False)
             self.stdout.write(self.style.SUCCESS(
                 f'✓ Task reminder sent to {task.user.email}: {task.title}'
             ))

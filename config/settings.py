@@ -1,11 +1,8 @@
-import os as _os
 import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / 'frontend'
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-k61b1*whk455$o#xl&(!m#8(fjod0#(t!%0%m!r1#+16$3_ta8'
@@ -13,9 +10,7 @@ SECRET_KEY = 'django-insecure-k61b1*whk455$o#xl&(!m#8(fjod0#(t!%0%m!r1#+16$3_ta8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -25,13 +20,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'rest_framework.authtoken',     # ← NEW
+    'rest_framework.authtoken',
     'django_filters',
+    'anymail',                 # ← NEW
 
     'apple_app',
     'notes',
-    'accounts',                     # ← NEW
-    'tasks'
+    'accounts',
+    'tasks',
 ]
 
 MIDDLEWARE = [
@@ -45,7 +41,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
-WSGI_APPLICATION = 'config.wsgi.application'
 
 TEMPLATES = [
     {
@@ -67,10 +62,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -78,10 +70,7 @@ DATABASES = {
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -97,28 +86,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/6.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.1/howto/static-files/
-
-
+# Static files
 ALLOWED_HOSTS = [
     'konaingkyaw.pythonanywhere.com',
     '127.0.0.1',
     'localhost',
 ]
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = []
@@ -126,16 +106,17 @@ _dist = FRONTEND_DIR / 'dist'
 if _dist.exists():
     STATICFILES_DIRS.append(_dist)
 
-# Media files (user uploads)
+# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # notes/permissions Phase 2 မှာ ပြင်မယ်
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
@@ -144,13 +125,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-CRON_SECRET = _os.environ.get('CRON_SECRET', '')
-
-
-# ---------- Email ----------
-# ---------- Email ----------
-
-
+# ---------- Env reader ----------
 def _read_env_file():
     """Read .env for local dev when env vars are not set."""
     env_path = BASE_DIR / '.env'
@@ -162,16 +137,29 @@ def _read_env_file():
             if not line or line.startswith('#') or '=' not in line:
                 continue
             k, v = line.split('=', 1)
-            _os.environ.setdefault(k.strip(), v.strip())
+            os.environ.setdefault(k.strip(), v.strip())
 
 _read_env_file()
 
-GMAIL_USER = _os.environ.get('GMAIL_USER', '')
-GMAIL_APP_PASSWORD = _os.environ.get('GMAIL_APP_PASSWORD', '')
+# ---------- Secrets from env ----------
+GMAIL_USER = os.environ.get('GMAIL_USER', '')
+GMAIL_APP_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD', '')
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+CRON_SECRET = os.environ.get('CRON_SECRET', '')
 
-# Dev: console (terminal မှာ code ပေါ်)
-# Prod: Gmail SMTP (user ဆီ email ရောက်)
-if GMAIL_USER and GMAIL_APP_PASSWORD:
+# ---------- Email ----------
+# Priority: Resend (if configured) → Gmail SMTP → Console (dev)
+if RESEND_API_KEY:
+    MAILERS = {
+        "default": {
+            "BACKEND": "anymail.backends.resend.EmailBackend",
+            "OPTIONS": {
+                "api_key": RESEND_API_KEY,
+            },
+        },
+    }
+    DEFAULT_FROM_EMAIL = "Notes <onboarding@resend.dev>"
+elif GMAIL_USER and GMAIL_APP_PASSWORD:
     MAILERS = {
         "default": {
             "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
@@ -184,7 +172,7 @@ if GMAIL_USER and GMAIL_APP_PASSWORD:
             },
         },
     }
-    DEFAULT_FROM_EMAIL = GMAIL_USER
+    DEFAULT_FROM_EMAIL = f'Notes App <{GMAIL_USER}>'
 else:
     MAILERS = {
         "default": {
