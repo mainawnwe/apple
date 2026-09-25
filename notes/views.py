@@ -169,3 +169,62 @@ def stats(request):
         'activity_7d': days,
         'top_tags': top_tags,
     })
+
+import os
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
+
+
+@csrf_exempt
+@require_GET
+def cron_send_reminders(request):
+    """HTTP endpoint for external cron services (cron-job.org etc.).
+    Protected by a secret key in the query string.
+    """
+    secret = os.environ.get('CRON_SECRET', '')
+    if not secret:
+        return JsonResponse({'error': 'CRON_SECRET not configured'}, status=500)
+
+    if request.GET.get('key') != secret:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+
+    # Run the same logic as the management command
+    from django.core.management import call_command
+    from io import StringIO
+
+    out = StringIO()
+    try:
+        call_command('send_reminders', '--window-minutes', '15', stdout=out)
+        output = out.getvalue()
+        return JsonResponse({'ok': True, 'output': output})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=500)
+
+
+import os
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
+
+
+@csrf_exempt
+@require_GET
+def cron_send_reminders(request):
+    """HTTP endpoint for external cron services."""
+    secret = os.environ.get('CRON_SECRET', '')
+    if not secret:
+        return JsonResponse({'error': 'CRON_SECRET not configured'}, status=500)
+
+    if request.GET.get('key') != secret:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+
+    from django.core.management import call_command
+    from io import StringIO
+
+    out = StringIO()
+    try:
+        call_command('send_reminders', '--window-minutes', '15', stdout=out)
+        return JsonResponse({'ok': True, 'output': out.getvalue()})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=500)

@@ -1,3 +1,4 @@
+import os as _os
 import os
 from pathlib import Path
 
@@ -143,11 +144,12 @@ REST_FRAMEWORK = {
     ],
 }
 
+CRON_SECRET = _os.environ.get('CRON_SECRET', '')
 
 
 # ---------- Email ----------
 # ---------- Email ----------
-import os as _os
+
 
 def _read_env_file():
     """Read .env for local dev when env vars are not set."""

@@ -5,7 +5,8 @@ from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
-
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 from notes.models import Note
 from tasks.models import Task
 
@@ -25,15 +26,45 @@ class Command(BaseCommand):
             action='store_true',
             help='Print what would be sent, but do not send or update DB',
         )
+        parser.add_argument(
+            '--loop',
+            action='store_true',
+            help='Run continuously, checking every N seconds',
+        )
+        parser.add_argument(
+            '--interval',
+            type=int,
+            default=60,
+            help='Seconds between checks in --loop mode (default: 60)',
+        )
 
+    # ---------- Entry point ----------
     def handle(self, *args, **options):
+        if options.get('loop'):
+            import time
+            interval = options['interval']
+            self.stdout.write(self.style.SUCCESS(
+                f'Loop mode: checking every {interval}s. Ctrl+C to stop.'
+            ))
+            try:
+                while True:
+                    self._run_once(options)
+                    time.sleep(interval)
+            except KeyboardInterrupt:
+                self.stdout.write('\nStopped.')
+            return
+
+        # Single run
+        self._run_once(options)
+
+    # ---------- The actual work ----------
+    def _run_once(self, options):
         window = options['window_minutes']
         dry_run = options['dry_run']
 
         now = timezone.now()
         cutoff = now - timedelta(minutes=window)
 
-        # Query due reminders
         due_notes = Note.objects.filter(
             reminder_datetime__isnull=False,
             reminder_datetime__lte=now,
@@ -73,6 +104,7 @@ class Command(BaseCommand):
             f'Notes: {due_notes.count()}, Tasks: {due_tasks.count()}.'
         ))
 
+    # ---------- Email helpers ----------
     def _send_note_reminder(self, note, dry_run):
         if not note.user.email:
             self.stdout.write(self.style.WARNING(
