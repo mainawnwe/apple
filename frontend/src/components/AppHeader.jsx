@@ -38,7 +38,7 @@ export default function AppHeader({ children }) {
     <>
       <header className="topbar">
         <div className="topbar-inner">
-          {/* ---------- LEFT: brand + nav ---------- */}
+          {/* LEFT: brand + nav */}
           <div className="topbar-left">
             <Link to="/" className="brand">
               <span className="logo">◈</span>
@@ -52,13 +52,15 @@ export default function AppHeader({ children }) {
             </nav>
           </div>
 
-          {/* ---------- CENTER: page-specific actions ---------- */}
+          {/* CENTER: page-specific actions */}
           <div className="topbar-center">
             {children}
           </div>
 
-          {/* ---------- RIGHT: user menu ---------- */}
+          {/* RIGHT: user menu — single block */}
           <div className="topbar-right">
+            <ThemeToggle />
+
             <button
               className="btn-ghost search-trigger"
               onClick={() => setSearchOpen(true)}
@@ -71,26 +73,6 @@ export default function AppHeader({ children }) {
             <Link to="/profile" className="btn-ghost user-btn" title="Profile">
               👤 {user?.username}
             </Link>
-            <div className="topbar-right">
-              <ThemeToggle />
-
-              <button
-                className="btn-ghost search-trigger"
-                onClick={() => setSearchOpen(true)}
-                title="Search (Ctrl+K or Ctrl+/)"
-              >
-                🔍
-                <kbd className="kbd-hint">Ctrl+K</kbd>
-              </button>
-
-              <Link to="/profile" className="btn-ghost user-btn" title="Profile">
-                👤 {user?.username}
-              </Link>
-
-              <button className="btn-ghost" onClick={handleLogout}>
-                Logout
-              </button>
-            </div>
 
             <button className="btn-ghost" onClick={handleLogout}>
               Logout
