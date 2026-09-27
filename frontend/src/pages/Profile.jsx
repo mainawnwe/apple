@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { changePassword } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import './Auth.css'
 
 export default function Profile() {
-  const { user, logout, setUser } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const toast = useToast()
 
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -17,6 +19,7 @@ export default function Profile() {
 
   const handleLogout = async () => {
     await logout()
+    toast.info('Logged out')
     navigate('/login', { replace: true })
   }
 
@@ -32,14 +35,16 @@ export default function Profile() {
     setPwLoading(true)
     try {
       const data = await changePassword({ old_password: oldPw, new_password: newPw })
-      // Server issues a new token; save it so user stays logged in
       if (data.token) localStorage.setItem('token', data.token)
       setPwSuccess('Password updated successfully.')
+      toast.success('Password updated')
       setOldPw('')
       setNewPw('')
       setConfirmPw('')
     } catch (err) {
-      setPwError(err.data?.detail || err.message || 'Failed to update password')
+      const msg = err.data?.detail || err.message || 'Failed to update password'
+      setPwError(msg)
+      toast.error(msg)
     } finally {
       setPwLoading(false)
     }
@@ -48,7 +53,9 @@ export default function Profile() {
   return (
     <div className="auth-page">
       <div className="auth-card" style={{ maxWidth: 480 }}>
-        <div className="auth-logo">◈</div>
+        <div className="auth-logo">
+          <img src="/static/brand/mark.svg" alt="" className="brand-mark" />
+        </div>
         <h1 className="auth-title">Your profile</h1>
         <p className="auth-subtitle">Signed in as {user?.username}</p>
 

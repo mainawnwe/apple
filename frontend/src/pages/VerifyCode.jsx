@@ -45,6 +45,7 @@ export default function VerifyCode() {
   try {
     const data = await verifySignup({ email, code })
     login(data.token, data.user)
+    toast.success('Email verified!')
     navigate('/', { replace: true })
   } catch (err) {
     // Username race condition — ပြန် signup လုပ်ခိုင်း

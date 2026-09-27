@@ -41,7 +41,7 @@ export default function AppHeader({ children }) {
           {/* LEFT: brand + nav */}
           <div className="topbar-left">
             <Link to="/" className="brand">
-              <span className="logo">◈</span>
+              <img src="/static/brand/mark.svg" alt="" className="brand-mark" />
               <span>Notes</span>
             </Link>
 

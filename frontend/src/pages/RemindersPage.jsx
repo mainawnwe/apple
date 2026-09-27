@@ -4,6 +4,7 @@ import '../App.css'
 import AppHeader from '../components/AppHeader'
 import { getReminders } from '../api/reminders'
 import { updateTask } from '../api/tasks'
+import { SkeletonReminder } from '../components/Skeleton'
 
 function formatTime(iso) {
   if (!iso) return ''
@@ -56,7 +57,7 @@ function ReminderItem({ item, onOpen, onComplete }) {
             onComplete(item)
           }}
         >
-          <input type="checkbox" checked={false} onChange={() => {}} />
+          <input type="checkbox" checked={false} onChange={() => { }} />
           <span className="checkmark" />
         </label>
       ) : (
@@ -171,7 +172,11 @@ export default function RemindersPage() {
         </div>
 
         {loading ? (
-          <p className="empty">Loading…</p>
+          <div className="reminders-bucket">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonReminder key={i} />
+            ))}
+          </div>
         ) : error ? (
           <p className="empty error">Error: {error}</p>
         ) : total === 0 ? (

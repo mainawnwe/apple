@@ -8,6 +8,7 @@ import NoteModal from '../components/NoteModal'
 import TagsSidebar from '../components/TagsSidebar'
 import { listNotes, createNote, updateNote, deleteNote } from '../api/notes'
 import { useConfirm } from '../context/ConfirmContext'
+import { useToast } from '../context/ToastContext'
 
 export default function NotesPage() {
   const [notes, setNotes] = useState([])
@@ -25,6 +26,7 @@ export default function NotesPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const confirm = useConfirm()
+  const toast = useToast()
 
   const refresh = async () => {
     try {
@@ -40,7 +42,6 @@ export default function NotesPage() {
 
   useEffect(() => { refresh() }, [])
 
-  // Auto-open note from global search
   useEffect(() => {
     const openNote = location.state?.openNote
     if (!openNote) return
@@ -48,7 +49,6 @@ export default function NotesPage() {
     navigate(location.pathname, { replace: true, state: {} })
   }, [location.state, navigate])
 
-  // Keyboard shortcuts: N (new note), / (focus search)
   useEffect(() => {
     const handler = (e) => {
       const tag = document.activeElement?.tagName
@@ -69,14 +69,26 @@ export default function NotesPage() {
   }, [])
 
   const handleCreate = async (fd) => {
-    await createNote(fd)
-    setShowForm(false)
-    refresh()
+    try {
+      await createNote(fd)
+      setShowForm(false)
+      toast.success('Note created')
+      refresh()
+    } catch (e) {
+      toast.error('Failed to create note')
+      console.error(e)
+    }
   }
 
   const handleUpdate = async (id, fd) => {
-    await updateNote(id, fd)
-    refresh()
+    try {
+      await updateNote(id, fd)
+      toast.success('Note updated')
+      refresh()
+    } catch (e) {
+      toast.error('Failed to update note')
+      console.error(e)
+    }
   }
 
   const handleDelete = async (id) => {
@@ -90,9 +102,26 @@ export default function NotesPage() {
       variant: 'danger',
     })
     if (!ok) return
-    await deleteNote(id)
-    setViewing(null)
-    refresh()
+    try {
+      await deleteNote(id)
+      setViewing(null)
+      toast.success('Note deleted')
+      refresh()
+    } catch (e) {
+      toast.error('Failed to delete note')
+      console.error(e)
+    }
+  }
+
+  const handlePin = async (note) => {
+    try {
+      await updateNote(note.id, { pinned: !note.pinned })
+      toast.success(note.pinned ? 'Unpinned' : '📌 Pinned to top')
+      refresh()
+    } catch (e) {
+      toast.error('Failed to update')
+      console.error(e)
+    }
   }
 
   const toggleTag = (name) => {
@@ -105,7 +134,7 @@ export default function NotesPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return notes.filter((n) => {
+    const list = notes.filter((n) => {
       if (typeFilter !== 'all' && n.note_type !== typeFilter) return false
       if (priorityFilter !== 'all' && n.priority !== priorityFilter) return false
 
@@ -128,7 +157,15 @@ export default function NotesPage() {
         n.tags.toLowerCase().includes(q)
       )
     })
+
+    // Sort: pinned first, then by updated_at (newest)
+    return list.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+      return new Date(b.updated_at) - new Date(a.updated_at)
+    })
   }, [notes, search, typeFilter, priorityFilter, activeTags])
+
+  const pinnedCount = filtered.filter((n) => n.pinned).length
 
   return (
     <div className="app">
@@ -184,7 +221,18 @@ export default function NotesPage() {
 
           <main className="content">
             {loading ? (
-              <p className="empty">Loading…</p>
+              <div className="grid">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="skeleton-card">
+                    <div className="skeleton skeleton-thumb" />
+                    <div className="skeleton-body">
+                      <div className="skeleton skeleton-line w-70" />
+                      <div className="skeleton skeleton-line w-90" />
+                      <div className="skeleton skeleton-line w-40" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : error ? (
               <p className="empty error">Error: {error}</p>
             ) : filtered.length === 0 ? (
@@ -193,11 +241,23 @@ export default function NotesPage() {
                 <p>Try clearing filters or search.</p>
               </div>
             ) : (
-              <div className="grid">
-                {filtered.map((note) => (
-                  <NoteCard key={note.id} note={note} onOpen={setViewing} />
-                ))}
-              </div>
+              <>
+                {pinnedCount > 0 && (
+                  <div className="section-label">
+                    📌 Pinned · {pinnedCount}
+                  </div>
+                )}
+                <div className="grid">
+                  {filtered.map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      onOpen={setViewing}
+                      onPin={handlePin}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </main>
         </div>

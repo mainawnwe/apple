@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="brandGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Main diamond mark -->
+  <g filter="url(#glow)">
+    <path d="M100 40 L160 100 L100 160 L40 100 Z"
+          stroke="url(#brandGrad)"
+          stroke-width="6"
+          stroke-linejoin="round"
+          fill="none"/>
+    <path d="M100 65 L135 100 L100 135 L65 100 Z"
+          fill="url(#brandGrad)"
+          opacity="0.85"/>
+    <circle cx="100" cy="100" r="6" fill="#fff"/>
+  </g>
+
+  <!-- Wordmark: KO NAING KYAW -->
+  <text x="200" y="92"
+        font-family="'SF Pro Display','Inter','Segoe UI',sans-serif"
+        font-size="32"
+        font-weight="800"
+        fill="url(#brandGrad2)"
+        letter-spacing="-0.5">
+    KO NAING
+  </text>
+  <text x="200" y="130"
+        font-family="'SF Pro Display','Inter','Segoe UI',sans-serif"
+        font-size="32"
+        font-weight="800"
+        fill="url(#brandGrad2)"
+        letter-spacing="-0.5">
+    KYAW
+  </text>
+  <text x="200" y="155"
+        font-family="'SF Pro Display','Inter','Segoe UI',sans-serif"
+        font-size="11"
+        font-weight="500"
+        fill="#64647e"
+        letter-spacing="4">
+    FULL STACK DEVELOPER
+  </text>
+</svg>

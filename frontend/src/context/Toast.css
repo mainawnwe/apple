@@ -1,0 +1,140 @@
+.toast-container {
+  position: fixed;
+  top: 5rem;              /* ← topbar ရဲ့ အောက် */
+  right: 1.5rem;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  pointer-events: none;
+  max-width: 380px;
+  width: calc(100% - 3rem);
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(180deg, #1c1a33, #12112a);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  font-size: 0.88rem;
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+  animation: toastSlideIn 0.25s cubic-bezier(0.2, 1, 0.4, 1);
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.toast-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--text-mute);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.toast-close:hover { color: var(--text); }
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.4;
+  animation: toastProgress 4s linear forwards;
+}
+
+@keyframes toastProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Type variants */
+.toast-success {
+  border-color: rgba(52, 211, 153, 0.35);
+}
+.toast-success .toast-icon {
+  background: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
+}
+.toast-success .toast-progress { color: #6ee7b7; }
+
+.toast-error {
+  border-color: rgba(248, 113, 113, 0.4);
+}
+.toast-error .toast-icon {
+  background: rgba(248, 113, 113, 0.15);
+  color: #fca5a5;
+}
+.toast-error .toast-progress { color: #fca5a5; }
+
+.toast-warning {
+  border-color: rgba(251, 191, 36, 0.35);
+}
+.toast-warning .toast-icon {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fcd34d;
+}
+.toast-warning .toast-progress { color: #fcd34d; }
+
+.toast-info {
+  border-color: rgba(96, 165, 250, 0.35);
+}
+.toast-info .toast-icon {
+  background: rgba(96, 165, 250, 0.15);
+  color: #93c5fd;
+}
+.toast-info .toast-progress { color: #93c5fd; }
+
+/* Light theme */
+[data-theme="light"] .toast {
+  background: linear-gradient(180deg, #ffffff, #f6f5fb);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 700px) {
+  .toast-container {
+    top: 4.5rem;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    max-width: none;
+  }
+}

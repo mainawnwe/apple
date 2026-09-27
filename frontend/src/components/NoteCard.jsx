@@ -13,13 +13,21 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString()
 }
 
-export default function NoteCard({ note, onOpen }) {
+export default function NoteCard({ note, onOpen, onPin }) {
   const images = note.attachments.filter(isImage)
   const files = note.attachments.filter((a) => !isImage(a))
   const tags = note.tags ? note.tags.split(',').map((t) => t.trim()).filter(Boolean) : []
 
+  const handlePinClick = (e) => {
+    e.stopPropagation()
+    onPin?.(note)
+  }
+
   return (
-    <article className={`note-card priority-${note.priority}`} onClick={() => onOpen(note)}>
+    <article
+      className={`note-card priority-${note.priority} ${note.pinned ? 'pinned' : ''}`}
+      onClick={() => onOpen(note)}
+    >
       {images[0] && (
         <div className="card-thumb">
           <img src={images[0].url} alt="" loading="lazy" />
@@ -30,11 +38,27 @@ export default function NoteCard({ note, onOpen }) {
       <div className="card-body">
         <div className="card-head">
           <h3>{note.title || 'Untitled'}</h3>
-          {note.reminder_datetime && (
-            <span className="reminder-badge" title={new Date(note.reminder_datetime).toLocaleString()}>
-              ⏰
-            </span>
-          )}
+
+          <div className="card-head-actions">
+            {note.reminder_datetime && (
+              <span
+                className="reminder-badge"
+                title={new Date(note.reminder_datetime).toLocaleString()}
+              >
+                ⏰
+              </span>
+            )}
+            {onPin && (
+              <button
+                className={`pin-btn ${note.pinned ? 'active' : ''}`}
+                onClick={handlePinClick}
+                title={note.pinned ? 'Unpin' : 'Pin to top'}
+                aria-label={note.pinned ? 'Unpin' : 'Pin'}
+              >
+                📌
+              </button>
+            )}
+          </div>
         </div>
 
         {note.content && <p className="card-preview">{note.content}</p>}

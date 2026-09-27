@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signup } from '../api/auth'
 import './Auth.css'
+import { useToast } from '../context/ToastContext'
 
 export default function Signup() {
   const [username, setUsername] = useState('')
@@ -12,6 +13,7 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
+  const toast = useToast()
 
   const validate = () => {
     if (username.length < 3) return 'Username must be at least 3 characters.'
@@ -31,12 +33,14 @@ export default function Signup() {
     setLoading(true)
     try {
       await signup({ username, email, password })
+      toast.success('Account created! Check your email for the code.')
       navigate('/verify', { state: { email, fromSignup: true } })
     } catch (err) {
       const data = err.data || {}
       const msg = data.username?.[0] || data.email?.[0] || data.password?.[0]
         || data.detail || err.message || 'Signup failed'
       setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

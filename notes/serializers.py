@@ -30,6 +30,7 @@ class NoteSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user',
             'title', 'content', 'note_type', 'priority',
+            'pinned',                              # ← NEW
             'reminder_datetime', 'reminder_sent',
             'tags', 'created_at', 'updated_at',
             'attachments', 'upload_files',

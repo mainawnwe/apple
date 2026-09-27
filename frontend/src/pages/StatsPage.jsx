@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import '../App.css'
 import AppHeader from '../components/AppHeader'
 import { getStats } from '../api/stats'
+import { SkeletonStat } from '../components/Skeleton'
 
 export default function StatsPage() {
   const [data, setData] = useState(null)
@@ -15,11 +16,18 @@ export default function StatsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) {
+    if (loading) {
     return (
       <div className="app">
         <AppHeader />
-        <p className="empty" style={{ padding: '4rem 1rem' }}>Loading…</p>
+        <main className="stats-page">
+          <h1 className="stats-heading">📊 Your Activity</h1>
+          <div className="stats-grid">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonStat key={i} />
+            ))}
+          </div>
+        </main>
       </div>
     )
   }

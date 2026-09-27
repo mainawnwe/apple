@@ -13,45 +13,48 @@ import Profile from './pages/Profile'
 import TasksPage from './pages/TasksPage'
 import StatsPage from './pages/StatsPage'
 import RemindersPage from './pages/RemindersPage'
+import { ToastProvider } from './context/ToastContext'
 
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <ConfirmProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/verify" element={<VerifyCode />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
+          <ToastProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/verify" element={<VerifyCode />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
-              <Route
-                path="/"
-                element={<ProtectedRoute><NotesPage /></ProtectedRoute>}
-              />
-              <Route
-                path="/tasks"
-                element={<ProtectedRoute><TasksPage /></ProtectedRoute>}
-              />
-              <Route
-                path="/reminders"
-                element={<ProtectedRoute><RemindersPage /></ProtectedRoute>}
-              />
-              <Route
-                path="/stats"
-                element={<ProtectedRoute><StatsPage /></ProtectedRoute>}
-              />
-              
-              <Route
-                path="/profile"
-                element={<ProtectedRoute><Profile /></ProtectedRoute>}
-              />
+                <Route
+                  path="/"
+                  element={<ProtectedRoute><NotesPage /></ProtectedRoute>}
+                />
+                <Route
+                  path="/tasks"
+                  element={<ProtectedRoute><TasksPage /></ProtectedRoute>}
+                />
+                <Route
+                  path="/reminders"
+                  element={<ProtectedRoute><RemindersPage /></ProtectedRoute>}
+                />
+                <Route
+                  path="/stats"
+                  element={<ProtectedRoute><StatsPage /></ProtectedRoute>}
+                />
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
+                <Route
+                  path="/profile"
+                  element={<ProtectedRoute><Profile /></ProtectedRoute>}
+                />
+
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
         </ConfirmProvider>
       </AuthProvider>
     </ThemeProvider>

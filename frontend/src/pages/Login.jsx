@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { login as apiLogin } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import './Auth.css'
 
 export default function Login() {
@@ -13,6 +14,7 @@ export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const toast = useToast()
   const from = location.state?.from?.pathname || '/'
 
   const handleSubmit = async (e) => {
@@ -22,17 +24,21 @@ export default function Login() {
     try {
       const data = await apiLogin({ username, password })
       login(data.token, data.user)
+      toast.success(`Welcome back, ${data.user.username}!`)
       navigate(from, { replace: true })
     } catch (err) {
       // Special case: account exists but not verified
       if (err.status === 403 && err.data?.code === 'not_verified') {
+        toast.info('Please verify your email to continue.')
         navigate('/verify', {
           state: { email: err.data.email, fromSignup: true },
           replace: true,
         })
         return
       }
-      setError(err.data?.detail || err.message || 'Login failed')
+      const msg = err.data?.detail || err.message || 'Login failed'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

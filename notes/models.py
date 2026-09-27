@@ -13,6 +13,7 @@ class Note(models.Model):
         ('medium', 'Medium'),
         ('high', 'High'),
     ]
+
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='notes'
     )
@@ -21,18 +22,18 @@ class Note(models.Model):
     note_type = models.CharField(max_length=10, choices=NOTE_TYPES, default='text')
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
 
-    # Reminder (Phase 3 will use this)
+    pinned = models.BooleanField(default=False)   # ← NEW
+
     reminder_datetime = models.DateTimeField(null=True, blank=True)
     reminder_sent = models.BooleanField(default=False)
 
-    # Tags as a comma-separated string for simplicity now; upgrade later
     tags = models.CharField(max_length=255, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-updated_at']
+        ordering = ['-pinned', '-updated_at']
 
     def __str__(self):
         return self.title or f"Note #{self.pk}"

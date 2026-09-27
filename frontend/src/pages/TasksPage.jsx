@@ -8,6 +8,8 @@ import TaskModal from '../components/TaskModal'
 import TagsSidebar from '../components/TagsSidebar'
 import { listTasks, createTask, updateTask, deleteTask } from '../api/tasks'
 import { useConfirm } from '../context/ConfirmContext'
+import { useToast } from '../context/ToastContext'
+import { SkeletonTask } from '../components/Skeleton'
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([])
@@ -25,6 +27,7 @@ export default function TasksPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const confirm = useConfirm()
+  const toast = useToast()
 
   const refresh = async () => {
     try {
@@ -67,20 +70,38 @@ export default function TasksPage() {
   }, [])
 
   const handleCreate = async (payload) => {
-    await createTask(payload)
-    setShowForm(false)
-    refresh()
+    try {
+      await createTask(payload)
+      setShowForm(false)
+      toast.success('Task created')
+      refresh()
+    } catch (e) {
+      toast.error('Failed to create task')
+      console.error(e)
+    }
   }
 
   const handleUpdate = async (id, payload) => {
-    await updateTask(id, payload)
-    setViewing(null)
-    refresh()
+    try {
+      await updateTask(id, payload)
+      setViewing(null)
+      toast.success('Task updated')
+      refresh()
+    } catch (e) {
+      toast.error('Failed to update task')
+      console.error(e)
+    }
   }
 
   const handleToggle = async (task) => {
-    await updateTask(task.id, { completed: !task.completed })
-    refresh()
+    try {
+      await updateTask(task.id, { completed: !task.completed })
+      toast.success(task.completed ? 'Task reactivated' : 'Task completed')
+      refresh()
+    } catch (e) {
+      toast.error('Failed to update task')
+      console.error(e)
+    }
   }
 
   const handleDelete = async (id) => {
@@ -88,14 +109,20 @@ export default function TasksPage() {
     const ok = await confirm({
       title: 'Delete this task?',
       message: task?.title
-        ? `"${task.title}" will be permanently deleted. This cannot be undone.`
+        ? `"${task.title}" will be permanently deleted.`
         : 'This task will be permanently deleted.',
       confirmText: 'Delete',
       variant: 'danger',
     })
     if (!ok) return
-    await deleteTask(id)
-    refresh()
+    try {
+      await deleteTask(id)
+      toast.success('Task deleted')
+      refresh()
+    } catch (e) {
+      toast.error('Failed to delete task')
+      console.error(e)
+    }
   }
 
   const toggleTag = (name) => {
@@ -196,7 +223,11 @@ export default function TasksPage() {
 
           <main className="content">
             {loading ? (
-              <p className="empty">Loading…</p>
+              <div className="task-list-vertical">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <SkeletonTask key={i} />
+                ))}
+              </div>
             ) : error ? (
               <p className="empty error">Error: {error}</p>
             ) : filtered.length === 0 ? (
