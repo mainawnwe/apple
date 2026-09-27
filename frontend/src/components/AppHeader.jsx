@@ -48,6 +48,8 @@ export default function AppHeader({ children }) {
             <nav className="nav-tabs">
               <NavLink to="/" end className={tabClass}>Notes</NavLink>
               <NavLink to="/tasks" className={tabClass}>Tasks</NavLink>
+              <NavLink to="/reminders" className={tabClass}>Reminders</NavLink>
+
               <NavLink to="/stats" className={tabClass}>Stats</NavLink>
             </nav>
           </div>

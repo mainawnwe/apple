@@ -12,6 +12,7 @@ import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
 import TasksPage from './pages/TasksPage'
 import StatsPage from './pages/StatsPage'
+import RemindersPage from './pages/RemindersPage'
 
 export default function App() {
   return (
@@ -35,9 +36,14 @@ export default function App() {
                 element={<ProtectedRoute><TasksPage /></ProtectedRoute>}
               />
               <Route
+                path="/reminders"
+                element={<ProtectedRoute><RemindersPage /></ProtectedRoute>}
+              />
+              <Route
                 path="/stats"
                 element={<ProtectedRoute><StatsPage /></ProtectedRoute>}
               />
+              
               <Route
                 path="/profile"
                 element={<ProtectedRoute><Profile /></ProtectedRoute>}

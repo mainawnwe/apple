@@ -40,6 +40,7 @@ export default function NotesPage() {
 
   useEffect(() => { refresh() }, [])
 
+  // Auto-open note from global search
   useEffect(() => {
     const openNote = location.state?.openNote
     if (!openNote) return
@@ -47,6 +48,7 @@ export default function NotesPage() {
     navigate(location.pathname, { replace: true, state: {} })
   }, [location.state, navigate])
 
+  // Keyboard shortcuts: N (new note), / (focus search)
   useEffect(() => {
     const handler = (e) => {
       const tag = document.activeElement?.tagName
@@ -107,7 +109,6 @@ export default function NotesPage() {
       if (typeFilter !== 'all' && n.note_type !== typeFilter) return false
       if (priorityFilter !== 'all' && n.priority !== priorityFilter) return false
 
-      // Tag filter
       if (activeTags.length > 0) {
         const itemTags = (n.tags || '').split(',').map((t) => t.trim()).filter(Boolean)
         const wantsUntagged = activeTags.includes('__untagged__')
@@ -115,7 +116,6 @@ export default function NotesPage() {
 
         if (wantsUntagged && itemTags.length > 0) return false
         if (specificTags.length > 0) {
-          // AND match: item must have ALL selected tags
           const hasAll = specificTags.every((t) => itemTags.includes(t))
           if (!hasAll) return false
         }

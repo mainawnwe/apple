@@ -228,3 +228,89 @@ def cron_send_reminders(request):
         return JsonResponse({'ok': True, 'output': out.getvalue()})
     except Exception as e:
         return JsonResponse({'ok': False, 'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def reminders(request):
+    """Return upcoming + overdue reminders for the current user.
+    Groups them into: overdue, today, tomorrow, this_week, later.
+    """
+    user = request.user
+    now = timezone.now()
+
+    from .serializers import NoteSerializer
+    from tasks.serializers import TaskSerializer
+
+    # Fetch notes with reminders
+    notes = Note.objects.filter(
+        user=user,
+        reminder_datetime__isnull=False,
+    ).order_by('reminder_datetime')
+
+    # Fetch tasks with reminders (not completed)
+    tasks = Task.objects.filter(
+        user=user,
+        reminder_datetime__isnull=False,
+        completed=False,
+    ).order_by('reminder_datetime')
+
+    # Serialize
+    note_data = NoteSerializer(notes, many=True, context={'request': request}).data
+    task_data = TaskSerializer(tasks, many=True).data
+
+    # Add type field
+    items = []
+    for n in note_data:
+        items.append({**n, 'type': 'note'})
+    for t in task_data:
+        items.append({**t, 'type': 'task'})
+
+    # Sort by reminder_datetime
+    items.sort(key=lambda x: x['reminder_datetime'])
+
+    # Time boundaries
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow_start = today_start + timedelta(days=1)
+    day_after_start = today_start + timedelta(days=2)
+    week_end = today_start + timedelta(days=7)
+
+    buckets = {
+        'overdue': [],
+        'today': [],
+        'tomorrow': [],
+        'this_week': [],
+        'later': [],
+    }
+
+    for item in items:
+        rdt_str = item['reminder_datetime']
+        # Parse ISO string to datetime
+        from django.utils.dateparse import parse_datetime
+        rdt = parse_datetime(rdt_str)
+        if rdt is None:
+            continue
+
+        if rdt < now and not item.get('reminder_sent'):
+            buckets['overdue'].append(item)
+        elif rdt >= now and rdt < tomorrow_start:
+            buckets['today'].append(item)
+        elif rdt >= tomorrow_start and rdt < day_after_start:
+            buckets['tomorrow'].append(item)
+        elif rdt >= day_after_start and rdt < week_end:
+            buckets['this_week'].append(item)
+        elif rdt >= week_end:
+            buckets['later'].append(item)
+
+    return Response({
+        'now': now.isoformat(),
+        'counts': {
+            'overdue': len(buckets['overdue']),
+            'today': len(buckets['today']),
+            'tomorrow': len(buckets['tomorrow']),
+            'this_week': len(buckets['this_week']),
+            'later': len(buckets['later']),
+            'total': sum(len(v) for v in buckets.values()),
+        },
+        'buckets': buckets,
+    })
