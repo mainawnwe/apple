@@ -6,7 +6,7 @@ import NoteCard from '../components/NoteCard'
 import NoteForm from '../components/NoteForm'
 import NoteModal from '../components/NoteModal'
 import TagsSidebar from '../components/TagsSidebar'
-import { listNotes, createNote, updateNote, deleteNote } from '../api/notes'
+import { listNotes, createNote, updateNote, updateNoteJSON, deleteNote } from '../api/notes'
 import { useConfirm } from '../context/ConfirmContext'
 import { useToast } from '../context/ToastContext'
 
@@ -115,7 +115,7 @@ export default function NotesPage() {
 
   const handlePin = async (note) => {
     try {
-      await updateNote(note.id, { pinned: !note.pinned })
+      await updateNoteJSON(note.id, { pinned: !note.pinned })
       toast.success(note.pinned ? 'Unpinned' : '📌 Pinned to top')
       refresh()
     } catch (e) {
@@ -169,7 +169,23 @@ export default function NotesPage() {
 
   return (
     <div className="app">
-      <AppHeader>
+      <AppHeader
+        mobileSearch={
+          <>
+            <div className="search-wrap">
+              <input
+                type="text"
+                placeholder="Search notes…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button className="btn-primary" onClick={() => setShowForm(true)}>
+              + New
+            </button>
+          </>
+        }
+      >
         <div className="search-wrap">
           <input
             type="text"

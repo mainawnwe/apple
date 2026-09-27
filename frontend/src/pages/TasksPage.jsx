@@ -166,20 +166,24 @@ export default function TasksPage() {
 
   return (
     <div className="app">
-      <AppHeader>
-        <div className="search-wrap">
-          <input
-            type="text"
-            placeholder="Search tasks…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <button className="btn-primary" onClick={() => setShowForm(true)}>
-          + New task
-          <kbd className="kbd-hint">N</kbd>
-        </button>
+            <AppHeader
+        mobileSearch={
+          <>
+            <div className="search-wrap">
+              <input
+                type="text"
+                placeholder="Search tasks…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button className="btn-primary" onClick={() => setShowForm(true)}>
+              + New
+            </button>
+          </>
+        }
+      >
+        {/* desktop children */}
       </AppHeader>
 
       <div className="layout-with-sidebar">

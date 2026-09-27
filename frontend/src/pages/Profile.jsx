@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { changePassword } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import './Auth.css'
+import AppHeader from '../components/AppHeader'
+import '../App.css'
 
 export default function Profile() {
   const { user, logout } = useAuth()
@@ -16,6 +17,14 @@ export default function Profile() {
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState('')
   const [pwLoading, setPwLoading] = useState(false)
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/')
+    }
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -50,99 +59,137 @@ export default function Profile() {
     }
   }
 
+  const initials = (user?.username || '?').slice(0, 2).toUpperCase()
+
   return (
-    <div className="auth-page">
-      <div className="auth-card" style={{ maxWidth: 480 }}>
-        <div className="auth-logo">
-          <img src="/static/brand/mark.svg" alt="" className="brand-mark" />
-        </div>
-        <h1 className="auth-title">Your profile</h1>
-        <p className="auth-subtitle">Signed in as {user?.username}</p>
+    <div className="app">
+      <AppHeader />
+      <main className="settings-page">
+        {/* Back button */}
+        <button className="back-btn" onClick={handleBack}>
+          <span className="back-arrow">←</span>
+          <span>Back</span>
+        </button>
 
-        <div className="auth-field" style={{ marginBottom: '1rem' }}>
-          <label>Username</label>
-          <input type="text" value={user?.username || ''} readOnly />
-        </div>
+        {/* Profile Header */}
+        <header className="settings-header">
+          <div className="settings-avatar">
+            <span>{initials}</span>
+          </div>
+          <div className="settings-header-info">
+            <h1 className="settings-username">{user?.username}</h1>
+            <p className="settings-email">{user?.email}</p>
+            <p className="settings-meta">
+              <span className="settings-meta-dot" />
+              Signed in
+            </p>
+          </div>
+        </header>
 
-        <div className="auth-field" style={{ marginBottom: '1.5rem' }}>
-          <label>Email</label>
-          <input type="email" value={user?.email || ''} readOnly />
-        </div>
-
-        <div className="auth-divider">Change password</div>
-
-        <form className="auth-form" onSubmit={handleChangePassword}>
-          {pwError && <div className="auth-error">{pwError}</div>}
-          {pwSuccess && <div className="auth-success">{pwSuccess}</div>}
-
-          <div className="auth-field">
-            <label htmlFor="old">Current password</label>
-            <input
-              id="old"
-              type="password"
-              value={oldPw}
-              onChange={(e) => setOldPw(e.target.value)}
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-            />
+        {/* Account Section */}
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <h2 className="settings-section-title">Account</h2>
+            <p className="settings-section-desc">
+              Your account information is managed by the system
+            </p>
           </div>
 
-          <div className="auth-field">
-            <label htmlFor="new">New password</label>
-            <input
-              id="new"
-              type="password"
-              value={newPw}
-              onChange={(e) => setNewPw(e.target.value)}
-              placeholder="at least 8 characters"
-              required
-              autoComplete="new-password"
-            />
+          <div className="settings-grid">
+            <div className="settings-field">
+              <label>Username</label>
+              <div className="settings-value">{user?.username}</div>
+            </div>
+
+            <div className="settings-field">
+              <label>Email address</label>
+              <div className="settings-value">{user?.email}</div>
+            </div>
+          </div>
+        </section>
+
+        <div className="settings-divider" />
+
+        {/* Security Section */}
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <h2 className="settings-section-title">Security</h2>
+            <p className="settings-section-desc">
+              Update your password to keep your account secure
+            </p>
           </div>
 
-          <div className="auth-field">
-            <label htmlFor="confirm">Confirm new password</label>
-            <input
-              id="confirm"
-              type="password"
-              value={confirmPw}
-              onChange={(e) => setConfirmPw(e.target.value)}
-              placeholder="repeat your password"
-              required
-              autoComplete="new-password"
-            />
+          <form className="settings-form" onSubmit={handleChangePassword}>
+            {pwError && <div className="auth-error">{pwError}</div>}
+            {pwSuccess && <div className="auth-success">{pwSuccess}</div>}
+
+            <div className="settings-field">
+              <label htmlFor="old">Current password</label>
+              <input
+                id="old"
+                type="password"
+                value={oldPw}
+                onChange={(e) => setOldPw(e.target.value)}
+                placeholder="••••••••"
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
+            <div className="settings-grid">
+              <div className="settings-field">
+                <label htmlFor="new">New password</label>
+                <input
+                  id="new"
+                  type="password"
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  placeholder="At least 8 characters"
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="confirm">Confirm new password</label>
+                <input
+                  id="confirm"
+                  type="password"
+                  value={confirmPw}
+                  onChange={(e) => setConfirmPw(e.target.value)}
+                  placeholder="Repeat your password"
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+
+            <div className="settings-actions">
+              <button className="btn-primary" type="submit" disabled={pwLoading}>
+                {pwLoading ? 'Updating…' : 'Update password'}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <div className="settings-divider" />
+
+        {/* Session Section */}
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <h2 className="settings-section-title">Session</h2>
+            <p className="settings-section-desc">
+              Sign out from this device
+            </p>
           </div>
 
-          <button className="auth-btn" type="submit" disabled={pwLoading}>
-            {pwLoading ? 'Updating…' : 'Update password'}
-          </button>
-        </form>
-
-        <div className="auth-divider" style={{ marginTop: '1.75rem' }}>Account</div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-          <Link
-            to="/"
-            className="auth-btn"
-            style={{ textAlign: 'center', textDecoration: 'none', flex: 1, margin: 0 }}
-          >
-            Back to notes
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="auth-btn"
-            style={{
-              flex: 1,
-              background: 'rgba(248, 113, 113, 0.15)',
-              color: '#fca5a5',
-              margin: 0,
-            }}
-          >
-            Log out
-          </button>
-        </div>
-      </div>
+          <div className="settings-actions">
+            <button className="btn-danger" onClick={handleLogout}>
+              Log out
+            </button>
+          </div>
+        </section>
+      </main>
     </div>
   )
 }

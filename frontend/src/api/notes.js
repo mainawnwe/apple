@@ -28,11 +28,25 @@ export async function createNote(formData) {
   return handle(res)
 }
 
+// For file uploads — uses multipart/form-data
 export async function updateNote(id, formData) {
   const res = await fetch(`${API}${id}/`, {
     method: 'PATCH',
     headers: { ...authHeaders() },
     body: formData,
+  })
+  return handle(res)
+}
+
+// For simple JSON updates (pin, toggle, etc.)
+export async function updateNoteJSON(id, data) {
+  const res = await fetch(`${API}${id}/`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+    },
+    body: JSON.stringify(data),
   })
   return handle(res)
 }
